@@ -1,30 +1,26 @@
-## 🚀 Features Implemented
+# Network Info Implementation
 
-*   **Smart Data Retrieval:**
-    *   **Online:** Checks internet connection -> Fetches fresh data from `RemoteDataSource` -> Caches data in `LocalDataSource` -> Returns data.
-    *   **Offline:** Checks internet connection -> Retrieves last saved data from `LocalDataSource`.
-*   **Error Handling:**
-    *   Catches `ServerException` when API calls fail.
-    *   Catches `CacheException` when no local data is available.
-    *   Propagates exceptions to the Domain layer for UI handling.
-*   **Test-Driven Development (TDD):**
-    *   Full unit test coverage using `mockito` to simulate network states and data source responses.
+This task enhances the app's robustness by integrating real-time network connectivity checks. The repository now intelligently switches between fetching data from the API and the local cache based on the device's internet status.
 
-## 📂 File Structure
+## 🚀 Key Features
 
-```text
-lib/features/product/data/repositories/
-└── product_repository_impl.dart   # The core logic implementation
+*   **Network Connectivity Check:**
+    *   Added `internet_connection_checker` dependency.
+    *   Implemented `NetworkInfo` class to abstract connectivity logic.
+*   **Smart Repository:**
+    *   The Repository now checks `networkInfo.isConnected`.
+    *   **Online:** Fetches from Remote Data Source.
+    *   **Offline:** Fetches from Local Data Source.
+*   **Web Support:** Added safeguards to fallback gracefully on Web platforms where raw socket checks are not supported.
 
-test/features/product/data/repositories/
-└── product_repository_impl_test.dart  # Unit tests verifying the logic
-```
-### 🧪 Running Tests
-Generate Mocks:
-```
-flutter pub run build_runner build --delete-conflicting-outputs
-```
-Run Tests:
-```
-flutter test test/features/product/data/repositories/product_repository_impl_test.dart
-```
+## 📂 File Changes
+
+*   `lib/core/network/network_info.dart`: Interface and Implementation of the network checker.
+*   `lib/core/injection.dart`: Updated Dependency Injection to provide the real `InternetConnectionChecker`.
+*   `pubspec.yaml`: Added `internet_connection_checker` package.
+
+## 🛠 Dependencies
+
+```yaml
+dependencies:
+  internet_connection_checker: ^1.0.0+1

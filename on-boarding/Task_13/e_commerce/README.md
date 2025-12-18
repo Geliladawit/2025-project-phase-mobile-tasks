@@ -18,8 +18,9 @@ lib/features/product/data/repositories/
 
 test/features/product/data/repositories/
 └── product_repository_impl_test.dart  # Unit tests verifying the logic
+
 ```
-### 🧪 Running Tests
+## 🧪 Running Tests
 Generate Mocks:
 ```
 flutter pub run build_runner build --delete-conflicting-outputs
