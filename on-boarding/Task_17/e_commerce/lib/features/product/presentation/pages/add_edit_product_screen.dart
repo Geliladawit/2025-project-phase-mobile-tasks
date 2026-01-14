@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/injection.dart';
+import '../../domain/usecases/create_product.dart';
+import '../../domain/usecases/update_product.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/custom_text_field.dart';
@@ -57,9 +59,9 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         );
 
         if (widget.product != null) {
-          await Injection.update.call(newProduct);
+          await getIt<UpdateProductUsecase>().call(newProduct);
         } else {
-          await Injection.create.call(newProduct);
+          await getIt<CreateProductUsecase>().call(newProduct);
         }
         
         if (!mounted) return;

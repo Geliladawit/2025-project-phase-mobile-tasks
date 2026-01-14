@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,53 +9,88 @@ import '../features/product/data/datasources/product_remote_data_source.dart';
 import '../features/product/data/datasources/product_local_data_source.dart';
 import '../features/product/domain/repositories/product_repo.dart';
 import '../features/product/domain/usecases/create_product.dart';
-import '../features/product/domain/usecases/get_product.dart'; 
+import '../features/product/domain/usecases/get_product.dart';
 import '../features/product/domain/usecases/get_single_product.dart';
 import '../features/product/domain/usecases/update_product.dart';
 import '../features/product/domain/usecases/delete_product.dart';
 import '../features/product/presentation/bloc/product_bloc.dart';
 import 'network/network_info.dart';
 
+final getIt = GetIt.instance;
+
 class Injection {
-  static late final ProductRepository repo;
-  static late final ViewAllProductsUsecase viewAll;
-  static late final GetSingleProductUsecase getSingle;
-  static late final CreateProductUsecase create;
-  static late final UpdateProductUsecase update;
-  static late final DeleteProductUsecase delete;
-  static late final ProductBloc productBloc;
-
   static Future<void> init() async {
+    // 1. External Dependencies
+    // Register SharedPreferences as async singleton
     final sharedPreferences = await SharedPreferences.getInstance();
-    final connectionChecker = kIsWeb ? null : InternetConnectionChecker();
-    final client = http.Client();
+    getIt.registerSingleton<SharedPreferences>(sharedPreferences);
 
-    final networkInfo = NetworkInfoImpl(connectionChecker);
+    // Register http.Client as factory (can be created multiple times)
+    getIt.registerFactory<http.Client>(() => http.Client());
 
-    final localDataSource = ProductLocalDataSourceImpl(sharedPreferences: sharedPreferences);
-    
-    final remoteDataSource = ProductRemoteDataSourceImpl(client: client); 
+    // 2. Network Info
+    // Register NetworkInfo as factory (handles null InternetConnectionChecker on web)
+    getIt.registerFactory<NetworkInfo>(
+      () => NetworkInfoImpl(kIsWeb ? null : InternetConnectionChecker()),
+    );
 
-    repo = ProductRepositoryImpl(
-      remoteDataSource: remoteDataSource,
-      localDataSource: localDataSource,
-      networkInfo: networkInfo,
+    // 3. Data Sources
+    // Register ProductLocalDataSource as factory (depends on SharedPreferences)
+    getIt.registerFactory<ProductLocalDataSource>(
+      () => ProductLocalDataSourceImpl(
+        sharedPreferences: getIt<SharedPreferences>(),
+      ),
+    );
+
+    // Register ProductRemoteDataSource as factory (depends on http.Client)
+    getIt.registerFactory<ProductRemoteDataSource>(
+      () => ProductRemoteDataSourceImpl(
+        client: getIt<http.Client>(),
+      ),
+    );
+
+    // 4. Repository
+    // Register ProductRepository as singleton (depends on Data Sources and NetworkInfo)
+    getIt.registerSingleton<ProductRepository>(
+      ProductRepositoryImpl(
+        remoteDataSource: getIt<ProductRemoteDataSource>(),
+        localDataSource: getIt<ProductLocalDataSource>(),
+        networkInfo: getIt<NetworkInfo>(),
+      ),
     );
 
     // 5. Use Cases
-    viewAll = ViewAllProductsUsecase(repo);
-    getSingle = GetSingleProductUsecase(repo);
-    create = CreateProductUsecase(repo);
-    update = UpdateProductUsecase(repo);
-    delete = DeleteProductUsecase(repo);
+    // Register all Use Cases as singletons (depend on Repository)
+    getIt.registerSingleton<ViewAllProductsUsecase>(
+      ViewAllProductsUsecase(getIt<ProductRepository>()),
+    );
+
+    getIt.registerSingleton<GetSingleProductUsecase>(
+      GetSingleProductUsecase(getIt<ProductRepository>()),
+    );
+
+    getIt.registerSingleton<CreateProductUsecase>(
+      CreateProductUsecase(getIt<ProductRepository>()),
+    );
+
+    getIt.registerSingleton<UpdateProductUsecase>(
+      UpdateProductUsecase(getIt<ProductRepository>()),
+    );
+
+    getIt.registerSingleton<DeleteProductUsecase>(
+      DeleteProductUsecase(getIt<ProductRepository>()),
+    );
 
     // 6. BLoC
-    productBloc = ProductBloc(
-      getAllProduct: viewAll,
-      getSingleProduct: getSingle,
-      createProduct: create,
-      updateProduct: update,
-      deleteProduct: delete,
+    // Register ProductBloc as singleton (depends on Use Cases)
+    getIt.registerSingleton<ProductBloc>(
+      ProductBloc(
+        getAllProduct: getIt<ViewAllProductsUsecase>(),
+        getSingleProduct: getIt<GetSingleProductUsecase>(),
+        createProduct: getIt<CreateProductUsecase>(),
+        updateProduct: getIt<UpdateProductUsecase>(),
+        deleteProduct: getIt<DeleteProductUsecase>(),
+      ),
     );
   }
 }

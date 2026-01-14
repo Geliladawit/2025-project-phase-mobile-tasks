@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/injection.dart';
+import '../../domain/usecases/get_product.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
 import '../../../../core/widgets/loading_indicator.dart';
@@ -25,7 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadData() async {
     try {
-      final result = await Injection.viewAll.call();
+      final result = await getIt<ViewAllProductsUsecase>().call();
       if (mounted) {
         setState(() {
           products = result;

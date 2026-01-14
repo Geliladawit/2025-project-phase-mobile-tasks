@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/injection.dart';
+import '../../domain/usecases/delete_product.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../domain/entities/product.dart';
@@ -89,7 +90,7 @@ class ProductDetailScreen extends StatelessWidget {
                     text: "DELETE",
                     onPressed: () async {
                       try {
-                        await Injection.delete.call(product.id);
+                        await getIt<DeleteProductUsecase>().call(product.id);
                         if (!context.mounted) return;
                         Navigator.pop(context);
                       } catch (e) {
