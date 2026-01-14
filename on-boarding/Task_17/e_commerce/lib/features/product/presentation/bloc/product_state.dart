@@ -1,39 +1,45 @@
-part of 'product_bloc.dart';
+import 'package:equatable/equatable.dart';
+import '../../domain/entities/product.dart';
 
 abstract class ProductState extends Equatable {
   const ProductState();
-  
+
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
-class InitialState extends ProductState {}
+class EmptyState extends ProductState {
+  const EmptyState();
+}
 
-class LoadingState extends ProductState {}
+class LoadingState extends ProductState {
+  const LoadingState();
+}
 
 class LoadedAllProductState extends ProductState {
   final List<Product> products;
 
-  const LoadedAllProductState({required this.products});
+  const LoadedAllProductState(this.products);
 
   @override
-  List<Object> get props => [products];
+  List<Object?> get props => [products];
 }
 
 class LoadedSingleProductState extends ProductState {
   final Product product;
 
-  const LoadedSingleProductState({required this.product});
+  const LoadedSingleProductState(this.product);
 
   @override
-  List<Object> get props => [product];
+  List<Object?> get props => [product];
 }
 
 class ErrorState extends ProductState {
   final String message;
 
-  const ErrorState({required this.message});
+  const ErrorState(this.message);
 
   @override
-  List<Object> get props => [message];
+  List<Object?> get props => [message];
 }
+

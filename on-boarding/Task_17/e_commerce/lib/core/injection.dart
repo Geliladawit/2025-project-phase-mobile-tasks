@@ -1,4 +1,3 @@
-import 'package:get_it/get_it.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:internet_connection_checker/internet_connection_checker.dart';
@@ -10,63 +9,52 @@ import '../features/product/data/datasources/product_local_data_source.dart';
 import '../features/product/domain/repositories/product_repo.dart';
 import '../features/product/domain/usecases/create_product.dart';
 import '../features/product/domain/usecases/get_product.dart'; 
+import '../features/product/domain/usecases/get_single_product.dart';
 import '../features/product/domain/usecases/update_product.dart';
 import '../features/product/domain/usecases/delete_product.dart';
-import 'network/network_info.dart';
 import '../features/product/presentation/bloc/product_bloc.dart';
+import 'network/network_info.dart';
 
-final sl = GetIt.instance;
+class Injection {
+  static late final ProductRepository repo;
+  static late final ViewAllProductsUsecase viewAll;
+  static late final GetSingleProductUsecase getSingle;
+  static late final CreateProductUsecase create;
+  static late final UpdateProductUsecase update;
+  static late final DeleteProductUsecase delete;
+  static late final ProductBloc productBloc;
 
-Future<void> init() async {
-  // Features - Product
-  
-  sl.registerLazySingleton(() => ViewAllProductsUsecase(sl()));
-  sl.registerLazySingleton(() => CreateProductUsecase(sl()));
-  sl.registerLazySingleton(() => UpdateProductUsecase(sl()));
-  sl.registerLazySingleton(() => DeleteProductUsecase(sl()));
-  sl.registerLazySingleton(() => GetProduct(sl()));
+  static Future<void> init() async {
+    final sharedPreferences = await SharedPreferences.getInstance();
+    final connectionChecker = kIsWeb ? null : InternetConnectionChecker();
+    final client = http.Client();
 
-  sl.registerLazySingleton<ProductRepository>(
-    () => ProductRepositoryImpl(
-      remoteDataSource: sl(),
-      localDataSource: sl(),
-      networkInfo: sl(),
-    ),
-  );
+    final networkInfo = NetworkInfoImpl(connectionChecker);
 
-  sl.registerLazySingleton<ProductRemoteDataSource>(
-    () => ProductRemoteDataSourceImpl(client: sl()),
-  );
+    final localDataSource = ProductLocalDataSourceImpl(sharedPreferences: sharedPreferences);
+    
+    final remoteDataSource = ProductRemoteDataSourceImpl(client: client); 
 
-  sl.registerLazySingleton<ProductLocalDataSource>(
-    () => ProductLocalDataSourceImpl(sharedPreferences: sl()),
-  );
+    repo = ProductRepositoryImpl(
+      remoteDataSource: remoteDataSource,
+      localDataSource: localDataSource,
+      networkInfo: networkInfo,
+    );
 
-  // Core
-  sl.registerLazySingleton<NetworkInfo>(
-    () => NetworkInfoImpl(sl()),
-  );
-  // Bloc
-  sl.registerFactory(
-    () => ProductBloc(
-      viewAllProductsUsecase: sl(),
-      getProductUsecase: sl(), 
-      createProductUsecase: sl(),
-      updateProductUsecase: sl(),
-      deleteProductUsecase: sl(),
-    ),
-  );
-  // External
-  final sharedPreferences = await SharedPreferences.getInstance();
-  sl.registerLazySingleton(() => sharedPreferences);
-  
-  sl.registerLazySingleton(() => http.Client());
-  
-  if (kIsWeb) {
-    if (!kIsWeb) {
-      sl.registerLazySingleton(() => InternetConnectionChecker());
-    }
-  } else {
-    sl.registerLazySingleton(() => InternetConnectionChecker());
+    // 5. Use Cases
+    viewAll = ViewAllProductsUsecase(repo);
+    getSingle = GetSingleProductUsecase(repo);
+    create = CreateProductUsecase(repo);
+    update = UpdateProductUsecase(repo);
+    delete = DeleteProductUsecase(repo);
+
+    // 6. BLoC
+    productBloc = ProductBloc(
+      getAllProduct: viewAll,
+      getSingleProduct: getSingle,
+      createProduct: create,
+      updateProduct: update,
+      deleteProduct: delete,
+    );
   }
 }

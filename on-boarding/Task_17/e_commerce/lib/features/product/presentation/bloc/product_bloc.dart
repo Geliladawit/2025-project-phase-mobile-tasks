@@ -1,100 +1,102 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:equatable/equatable.dart';
-
-import '../../../../core/error/failures.dart';
-import '../../domain/entities/product.dart';
 import '../../domain/usecases/create_product.dart';
 import '../../domain/usecases/delete_product.dart';
-import '../../domain/usecases/get_product.dart'; 
+import '../../domain/usecases/get_product.dart';
+import '../../domain/usecases/get_single_product.dart';
 import '../../domain/usecases/update_product.dart';
-
-
-part 'product_event.dart';
-part 'product_state.dart';
-
-const String SERVER_FAILURE_MESSAGE = 'Server Failure';
-const String CACHE_FAILURE_MESSAGE = 'Cache Failure';
+import 'product_event.dart';
+import 'product_state.dart';
 
 class ProductBloc extends Bloc<ProductEvent, ProductState> {
-  final ViewAllProductsUsecase viewAllProductsUsecase;
-  final GetProduct getProductUsecase; 
-  final CreateProductUsecase createProductUsecase;
-  final UpdateProductUsecase updateProductUsecase;
-  final DeleteProductUsecase deleteProductUsecase;
+  final ViewAllProductsUsecase getAllProduct;
+  final GetSingleProductUsecase getSingleProduct;
+  final CreateProductUsecase createProduct;
+  final UpdateProductUsecase updateProduct;
+  final DeleteProductUsecase deleteProduct;
 
   ProductBloc({
-    required this.viewAllProductsUsecase,
-    required this.getProductUsecase,
-    required this.createProductUsecase,
-    required this.updateProductUsecase,
-    required this.deleteProductUsecase,
-  }) : super(InitialState()) {
-    
-    on<LoadAllProductEvent>((event, emit) async {
-      emit(LoadingState());
-      final result = await viewAllProductsUsecase.call();
-      
-      result.fold(
-        (failure) => emit(ErrorState(message: _mapFailureToMessage(failure))),
-        (products) => emit(LoadedAllProductState(products: products)),
-      );
-    });
-
-    on<GetSingleProductEvent>((event, emit) async {
-      emit(LoadingState());
-       final result = await getProductUsecase.call(event.id);
-       
-       result.fold(
-         (failure) => emit(ErrorState(message: _mapFailureToMessage(failure))),
-         (product) => emit(LoadedSingleProductState(product: product)),
-       );
-    });
-
-    on<CreateProductEvent>((event, emit) async {
-      emit(LoadingState());
-      final result = await createProductUsecase.call(event.product);
-
-      result.fold(
-        (failure) => emit(ErrorState(message: _mapFailureToMessage(failure))),
-        (_) {
-          add(LoadAllProductEvent());
-        },
-      );
-    });
-
-    on<UpdateProductEvent>((event, emit) async {
-      emit(LoadingState());
-      final result = await updateProductUsecase.call(event.product);
-
-      result.fold(
-        (failure) => emit(ErrorState(message: _mapFailureToMessage(failure))),
-        (_) {
-          add(LoadAllProductEvent());
-        },
-      );
-    });
-
-    on<DeleteProductEvent>((event, emit) async {
-      emit(LoadingState());
-      final result = await deleteProductUsecase.call(event.id);
-
-      result.fold(
-        (failure) => emit(ErrorState(message: _mapFailureToMessage(failure))),
-        (_) {
-          add(LoadAllProductEvent());
-        },
-      );
-    });
+    required this.getAllProduct,
+    required this.getSingleProduct,
+    required this.createProduct,
+    required this.updateProduct,
+    required this.deleteProduct,
+  }) : super(const EmptyState()) {
+    on<LoadAllProductEvent>(_onLoadAllProductEvent);
+    on<GetSingleProductEvent>(_onGetSingleProductEvent);
+    on<CreateProductEvent>(_onCreateProductEvent);
+    on<UpdateProductEvent>(_onUpdateProductEvent);
+    on<DeleteProductEvent>(_onDeleteProductEvent);
   }
 
-  String _mapFailureToMessage(Failure failure) {
-    switch (failure.runtimeType) {
-      case ServerFailure:
-        return SERVER_FAILURE_MESSAGE;
-      case CacheFailure:
-        return CACHE_FAILURE_MESSAGE;
-      default:
-        return 'Unexpected Error';
+  Future<void> _onLoadAllProductEvent(
+    LoadAllProductEvent event,
+    Emitter<ProductState> emit,
+  ) async {
+    emit(const LoadingState());
+    try {
+      final products = await getAllProduct.call();
+      emit(LoadedAllProductState(products));
+    } catch (e) {
+      emit(ErrorState(e.toString()));
+    }
+  }
+
+  Future<void> _onGetSingleProductEvent(
+    GetSingleProductEvent event,
+    Emitter<ProductState> emit,
+  ) async {
+    emit(const LoadingState());
+    try {
+      final product = await getSingleProduct.call(event.id);
+      emit(LoadedSingleProductState(product));
+    } catch (e) {
+      emit(ErrorState(e.toString()));
+    }
+  }
+
+  Future<void> _onCreateProductEvent(
+    CreateProductEvent event,
+    Emitter<ProductState> emit,
+  ) async {
+    emit(const LoadingState());
+    try {
+      await createProduct.call(event.product);
+      // After creating, reload all products
+      final products = await getAllProduct.call();
+      emit(LoadedAllProductState(products));
+    } catch (e) {
+      emit(ErrorState(e.toString()));
+    }
+  }
+
+  Future<void> _onUpdateProductEvent(
+    UpdateProductEvent event,
+    Emitter<ProductState> emit,
+  ) async {
+    emit(const LoadingState());
+    try {
+      await updateProduct.call(event.product);
+      // After updating, reload all products
+      final products = await getAllProduct.call();
+      emit(LoadedAllProductState(products));
+    } catch (e) {
+      emit(ErrorState(e.toString()));
+    }
+  }
+
+  Future<void> _onDeleteProductEvent(
+    DeleteProductEvent event,
+    Emitter<ProductState> emit,
+  ) async {
+    emit(const LoadingState());
+    try {
+      await deleteProduct.call(event.id);
+      // After deleting, reload all products
+      final products = await getAllProduct.call();
+      emit(LoadedAllProductState(products));
+    } catch (e) {
+      emit(ErrorState(e.toString()));
     }
   }
 }
+

@@ -1,6 +1,9 @@
-import 'package:e_commerce/features/product/domain/usecases/get_product.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/injection.dart';
+import '../../../../core/utils/error_handler.dart';
+import '../../../../core/widgets/empty_state_widget.dart';
+import '../../../../core/widgets/loading_indicator.dart';
 import '../../domain/entities/product.dart';
 import '../widgets/product_card.dart';
 
@@ -20,26 +23,26 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadData();
   }
 
-Future<void> _loadData() async {
-    final result = await sl<ViewAllProductsUsecase>().call();
-    
-    result.fold(
-      (failure) {
-        if (mounted) {
-          setState(() {
-            isLoading = false;
-          });
-        }
-      },
-      (loadedProducts) {
-        if (mounted) {
-          setState(() {
-            products = loadedProducts;
-            isLoading = false;
-          });
-        }
-      },
-    );
+  Future<void> _loadData() async {
+    try {
+      final result = await Injection.viewAll.call();
+      if (mounted) {
+        setState(() {
+          products = result;
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+        ErrorHandler.showErrorSnackBar(
+          context,
+          message: AppConstants.loadingProductsError,
+        );
+      }
+    }
   }
 
   @override
@@ -51,18 +54,25 @@ Future<void> _loadData() async {
         elevation: 0,
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const LoadingIndicator()
           : products.isEmpty
-              ? const Center(child: Text("No products yet. Add one!"))
+              ? EmptyStateWidget(
+                  message: AppConstants.noProductsMessage,
+                  icon: Icons.inventory_2_outlined,
+                )
               : ListView.separated(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(AppConstants.defaultPadding),
                   itemCount: products.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 20),
+                  separatorBuilder: (_, __) => const SizedBox(height: AppConstants.cardSpacing),
                   itemBuilder: (context, index) {
                     final product = products[index];
                     return GestureDetector(
                       onTap: () async {
-                        await Navigator.pushNamed(context, '/details', arguments: product);
+                        await Navigator.pushNamed(
+                          context,
+                          AppConstants.detailsRoute,
+                          arguments: product,
+                        );
                         _loadData();
                       },
                       child: ProductCard(product: product),
@@ -70,10 +80,14 @@ Future<void> _loadData() async {
                   },
                 ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF3F51F3),
+        backgroundColor: AppConstants.primaryColor,
         child: const Icon(Icons.add, color: Colors.white),
         onPressed: () async {
-          await Navigator.pushNamed(context, '/add_edit', arguments: null);
+          await Navigator.pushNamed(
+            context,
+            AppConstants.addEditRoute,
+            arguments: null,
+          );
           _loadData();
         },
       ),

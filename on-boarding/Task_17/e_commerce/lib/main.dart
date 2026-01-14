@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'core/constants/app_constants.dart';
+import 'core/injection.dart';
+import 'core/utils/route_helper.dart';
 import 'features/product/domain/entities/product.dart';
 import 'features/product/presentation/pages/add_edit_product_screen.dart';
 import 'features/product/presentation/pages/home_screen.dart';
 import 'features/product/presentation/pages/product_detail_screen.dart';
-import 'package:e_commerce/core/injection.dart'as di;
+
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); 
-  await di.init(); 
+  WidgetsFlutterBinding.ensureInitialized();
+  await Injection.init();
   runApp(const EcommerceApp());
 }
 
@@ -19,37 +22,28 @@ class EcommerceApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Shoe Shop',
       theme: ThemeData(
-        scaffoldBackgroundColor: const Color(0xFFF5F5F5),
+        scaffoldBackgroundColor: AppConstants.scaffoldBackgroundColor,
         primarySwatch: Colors.blue,
         useMaterial3: true,
       ),
-      initialRoute: '/',
+      initialRoute: AppConstants.homeRoute,
       onGenerateRoute: (settings) {
         switch (settings.name) {
-          case '/':
+          case AppConstants.homeRoute:
             return MaterialPageRoute(builder: (_) => const HomeScreen());
-          case '/details':
+          case AppConstants.detailsRoute:
             final product = settings.arguments as Product;
-            return _createRoute(ProductDetailScreen(product: product));
-          case '/add_edit':
+            return RouteHelper.createSlideRoute(
+              ProductDetailScreen(product: product),
+            );
+          case AppConstants.addEditRoute:
             final product = settings.arguments as Product?;
-            return _createRoute(AddEditProductScreen(product: product));
+            return RouteHelper.createSlideRoute(
+              AddEditProductScreen(product: product),
+            );
           default:
             return null;
         }
-      },
-    );
-  }
-
-  Route _createRoute(Widget page) {
-    return PageRouteBuilder(
-      pageBuilder: (context, animation, secondaryAnimation) => page,
-      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        const begin = Offset(1.0, 0.0);
-        const end = Offset.zero;
-        const curve = Curves.easeInOut;
-        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-        return SlideTransition(position: animation.drive(tween), child: child);
       },
     );
   }

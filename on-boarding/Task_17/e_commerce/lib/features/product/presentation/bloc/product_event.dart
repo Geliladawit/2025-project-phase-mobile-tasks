@@ -1,46 +1,50 @@
-part of 'product_bloc.dart';
+import 'package:equatable/equatable.dart';
+import '../../domain/entities/product.dart';
 
 abstract class ProductEvent extends Equatable {
   const ProductEvent();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
-class LoadAllProductEvent extends ProductEvent {}
+class LoadAllProductEvent extends ProductEvent {
+  const LoadAllProductEvent();
+}
 
 class GetSingleProductEvent extends ProductEvent {
   final String id;
 
-  const GetSingleProductEvent({required this.id});
+  const GetSingleProductEvent(this.id);
 
   @override
-  List<Object> get props => [id];
-}
-
-class CreateProductEvent extends ProductEvent {
-  final Product product;
-
-  const CreateProductEvent({required this.product});
-
-  @override
-  List<Object> get props => [product];
+  List<Object?> get props => [id];
 }
 
 class UpdateProductEvent extends ProductEvent {
   final Product product;
 
-  const UpdateProductEvent({required this.product});
+  const UpdateProductEvent(this.product);
 
   @override
-  List<Object> get props => [product];
+  List<Object?> get props => [product];
 }
 
 class DeleteProductEvent extends ProductEvent {
   final String id;
 
-  const DeleteProductEvent({required this.id});
+  const DeleteProductEvent(this.id);
 
   @override
-  List<Object> get props => [id];
+  List<Object?> get props => [id];
 }
+
+class CreateProductEvent extends ProductEvent {
+  final Product product;
+
+  const CreateProductEvent(this.product);
+
+  @override
+  List<Object?> get props => [product];
+}
+
