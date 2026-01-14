@@ -1,4 +1,3 @@
-import 'package:e_commerce/features/product/domain/usecases/delete_product.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/injection.dart';
 import '../../domain/entities/product.dart';
@@ -48,7 +47,7 @@ class ProductDetailScreen extends StatelessWidget {
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16), side: const BorderSide(color: Colors.red)),
                   onPressed: () async {
-                    await sl<DeleteProductUsecase>().call(product.id);
+                    await Injection.delete.call(product.id);
                     if (context.mounted) Navigator.pop(context);
                   },
                   child: const Text("DELETE", style: TextStyle(color: Colors.red)),

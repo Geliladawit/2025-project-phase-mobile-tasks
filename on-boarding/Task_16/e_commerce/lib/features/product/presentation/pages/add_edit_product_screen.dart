@@ -1,9 +1,6 @@
-import 'package:e_commerce/features/product/domain/usecases/create_product.dart';
-import 'package:e_commerce/features/product/domain/usecases/update_product.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/injection.dart';
 import '../../domain/entities/product.dart';
-import '../../../../core/constants/app_decor.dart';
 
 class AddEditProductScreen extends StatefulWidget {
   final Product? product;
@@ -43,21 +40,40 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
 
   Future<void> _saveForm() async {
     if (_formKey.currentState!.validate()) {
-      final newProduct = Product(
-        id: widget.product?.id ?? DateTime.now().toString(),
-        name: _nameController.text,
-        category: _categoryController.text,
-        price: double.tryParse(_priceController.text) ?? 0.0,
-        description: _descController.text,
-        imageUrl: _imgController.text,
-      );
+      try {
+        final newProduct = Product(
+          id: widget.product?.id ?? DateTime.now().toString(),
+          name: _nameController.text,
+          category: _categoryController.text,
+          price: double.tryParse(_priceController.text) ?? 0.0,
+          description: _descController.text,
+          imageUrl: _imgController.text,
+        );
 
-      if (widget.product != null) {
-        await sl<UpdateProductUsecase>().call(newProduct);
-      } else {
-        await sl<CreateProductUsecase>().call(newProduct);
+        if (widget.product != null) {
+          await Injection.update.call(newProduct);
+        } else {
+          await Injection.create.call(newProduct);
+        }
+        
+        if (mounted) {
+          Navigator.pop(context);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                widget.product != null 
+                  ? 'Failed to update product. Please check your internet connection.'
+                  : 'Failed to create product. Please check your internet connection.',
+              ),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
       }
-      if (mounted) Navigator.pop(context);
     }
   }
 
@@ -105,7 +121,8 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
       controller: controller,
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
       maxLines: maxLines,
-      decoration:AppDecoration.inputDecoration(label, hint),
+      decoration: InputDecoration(
+        labelText: label, hintText: hint, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), filled: true, fillColor: Colors.white),
       validator: (value) => value == null || value.isEmpty ? 'Please enter $label' : null,
     );
   }

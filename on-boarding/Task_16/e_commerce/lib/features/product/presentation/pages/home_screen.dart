@@ -1,4 +1,3 @@
-import 'package:e_commerce/features/product/domain/usecases/get_product.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/injection.dart';
 import '../../domain/entities/product.dart';
@@ -21,12 +20,28 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadData() async {
-    final result = await sl<ViewAllProductsUsecase>().call();
-    if (mounted) {
-      setState(() {
-        products = result;
-        isLoading = false;
-      });
+    try {
+      final result = await Injection.viewAll.call();
+      if (mounted) {
+        setState(() {
+          products = result;
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+          // Products list remains empty, will show "No products yet" message
+        });
+        // Optionally show a snackbar with error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to load products. Showing cached data if available.'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
     }
   }
 
