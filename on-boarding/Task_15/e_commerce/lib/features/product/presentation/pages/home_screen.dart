@@ -20,12 +20,28 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadData() async {
-    final result = await Injection.viewAll.call();
-    if (mounted) {
-      setState(() {
-        products = result;
-        isLoading = false;
-      });
+    try {
+      final result = await Injection.viewAll.call();
+      if (mounted) {
+        setState(() {
+          products = result;
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+          // Products list remains empty, will show "No products yet" message
+        });
+        // Optionally show a snackbar with error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to load products. Showing cached data if available.'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
     }
   }
 

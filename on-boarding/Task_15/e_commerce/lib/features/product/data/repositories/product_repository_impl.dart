@@ -19,9 +19,19 @@ class ProductRepositoryImpl implements ProductRepository {
   @override
   Future<List<Product>> getProducts() async {
     if (await networkInfo.isConnected) {
-      final remoteProducts = await remoteDataSource.getAllProducts();
-      await localDataSource.cacheProducts(remoteProducts);
-      return remoteProducts;
+      try {
+        final remoteProducts = await remoteDataSource.getAllProducts();
+        await localDataSource.cacheProducts(remoteProducts);
+        return remoteProducts;
+      } catch (e) {
+        // If remote fetch fails, try to get cached data
+        try {
+          return await localDataSource.getLastProducts();
+        } catch (cacheException) {
+          // If no cached data exists, rethrow the original server exception
+          throw e;
+        }
+      }
     } else {
       return await localDataSource.getLastProducts();
     }

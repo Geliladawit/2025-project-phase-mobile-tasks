@@ -40,21 +40,40 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
 
   Future<void> _saveForm() async {
     if (_formKey.currentState!.validate()) {
-      final newProduct = Product(
-        id: widget.product?.id ?? DateTime.now().toString(),
-        name: _nameController.text,
-        category: _categoryController.text,
-        price: double.tryParse(_priceController.text) ?? 0.0,
-        description: _descController.text,
-        imageUrl: _imgController.text,
-      );
+      try {
+        final newProduct = Product(
+          id: widget.product?.id ?? DateTime.now().toString(),
+          name: _nameController.text,
+          category: _categoryController.text,
+          price: double.tryParse(_priceController.text) ?? 0.0,
+          description: _descController.text,
+          imageUrl: _imgController.text,
+        );
 
-      if (widget.product != null) {
-        await Injection.update.call(newProduct);
-      } else {
-        await Injection.create.call(newProduct);
+        if (widget.product != null) {
+          await Injection.update.call(newProduct);
+        } else {
+          await Injection.create.call(newProduct);
+        }
+        
+        if (mounted) {
+          Navigator.pop(context);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                widget.product != null 
+                  ? 'Failed to update product. Please check your internet connection.'
+                  : 'Failed to create product. Please check your internet connection.',
+              ),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
       }
-      if (mounted) Navigator.pop(context);
     }
   }
 
