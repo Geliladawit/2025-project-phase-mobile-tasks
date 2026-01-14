@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/error/exception.dart';
 import '../models/product_model.dart';
 
@@ -8,8 +9,6 @@ abstract class ProductLocalDataSource {
   Future<void> cacheProducts(List<ProductModel> productsToCache);
 }
 
-const CACHED_PRODUCTS = 'CACHED_PRODUCTS';
-
 class ProductLocalDataSourceImpl implements ProductLocalDataSource {
   final SharedPreferences sharedPreferences;
 
@@ -17,7 +16,7 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
 
   @override
   Future<List<ProductModel>> getLastProducts() {
-    final jsonString = sharedPreferences.getString(CACHED_PRODUCTS);
+    final jsonString = sharedPreferences.getString(AppConstants.cachedProductsKey);
     
     if (jsonString != null) {
       final List<dynamic> jsonList = json.decode(jsonString);
@@ -39,6 +38,6 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
     
     final String jsonString = json.encode(jsonList);
     
-    return sharedPreferences.setString(CACHED_PRODUCTS, jsonString);
+    return sharedPreferences.setString(AppConstants.cachedProductsKey, jsonString);
   }
 }

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/injection.dart';
+import '../../../../core/utils/error_handler.dart';
+import '../../../../core/widgets/empty_state_widget.dart';
+import '../../../../core/widgets/loading_indicator.dart';
 import '../../domain/entities/product.dart';
 import '../widgets/product_card.dart';
 
@@ -32,14 +36,10 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) {
         setState(() {
           isLoading = false;
-          // Products list remains empty, will show "No products yet" message
         });
-        // Optionally show a snackbar with error message
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to load products. Showing cached data if available.'),
-            duration: Duration(seconds: 3),
-          ),
+        ErrorHandler.showErrorSnackBar(
+          context,
+          message: AppConstants.loadingProductsError,
         );
       }
     }
@@ -54,18 +54,25 @@ class _HomeScreenState extends State<HomeScreen> {
         elevation: 0,
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const LoadingIndicator()
           : products.isEmpty
-              ? const Center(child: Text("No products yet. Add one!"))
+              ? EmptyStateWidget(
+                  message: AppConstants.noProductsMessage,
+                  icon: Icons.inventory_2_outlined,
+                )
               : ListView.separated(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(AppConstants.defaultPadding),
                   itemCount: products.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 20),
+                  separatorBuilder: (_, __) => const SizedBox(height: AppConstants.cardSpacing),
                   itemBuilder: (context, index) {
                     final product = products[index];
                     return GestureDetector(
                       onTap: () async {
-                        await Navigator.pushNamed(context, '/details', arguments: product);
+                        await Navigator.pushNamed(
+                          context,
+                          AppConstants.detailsRoute,
+                          arguments: product,
+                        );
                         _loadData();
                       },
                       child: ProductCard(product: product),
@@ -73,10 +80,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF3F51F3),
+        backgroundColor: AppConstants.primaryColor,
         child: const Icon(Icons.add, color: Colors.white),
         onPressed: () async {
-          await Navigator.pushNamed(context, '/add_edit', arguments: null);
+          await Navigator.pushNamed(
+            context,
+            AppConstants.addEditRoute,
+            arguments: null,
+          );
           _loadData();
         },
       ),

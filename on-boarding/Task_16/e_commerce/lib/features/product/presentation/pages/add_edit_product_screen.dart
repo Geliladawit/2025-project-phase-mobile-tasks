@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/injection.dart';
+import '../../../../core/utils/error_handler.dart';
+import '../../../../core/widgets/custom_button.dart';
+import '../../../../core/widgets/custom_text_field.dart';
 import '../../domain/entities/product.dart';
 
 class AddEditProductScreen extends StatefulWidget {
@@ -25,7 +29,9 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
     _priceController = TextEditingController(text: widget.product?.price.toString() ?? '');
     _descController = TextEditingController(text: widget.product?.description ?? '');
     _categoryController = TextEditingController(text: widget.product?.category ?? '');
-    _imgController = TextEditingController(text: widget.product?.imageUrl ?? 'assets/images/DLS.png');
+    _imgController = TextEditingController(
+      text: widget.product?.imageUrl ?? AppConstants.defaultImageUrl,
+    );
   }
 
   @override
@@ -56,23 +62,16 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
           await Injection.create.call(newProduct);
         }
         
-        if (mounted) {
-          Navigator.pop(context);
-        }
+        if (!mounted) return;
+        Navigator.pop(context);
       } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                widget.product != null 
-                  ? 'Failed to update product. Please check your internet connection.'
-                  : 'Failed to create product. Please check your internet connection.',
-              ),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 3),
-            ),
-          );
-        }
+        if (!mounted) return;
+        ErrorHandler.showErrorSnackBar(
+          context,
+          message: widget.product != null
+              ? AppConstants.updateProductError
+              : AppConstants.createProductError,
+        );
       }
     }
   }
@@ -89,41 +88,51 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         ),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(AppConstants.defaultPadding),
         child: Form(
           key: _formKey,
           child: ListView(
             children: [
-              _buildTextField(_nameController, "Name", "Enter product name"),
-              const SizedBox(height: 15),
-              _buildTextField(_categoryController, "Category", "e.g. Men's Shoe"),
-              const SizedBox(height: 15),
-              _buildTextField(_priceController, "Price", "0.00", isNumber: true),
-              const SizedBox(height: 15),
-              _buildTextField(_descController, "Description", "Enter details...", maxLines: 4),
-              const SizedBox(height: 15),
-              _buildTextField(_imgController, "Image URL", "Paste image link"),
+              CustomTextField(
+                controller: _nameController,
+                label: "Name",
+                hint: "Enter product name",
+              ),
+              const SizedBox(height: AppConstants.defaultSpacing),
+              CustomTextField(
+                controller: _categoryController,
+                label: "Category",
+                hint: "e.g. Men's Shoe",
+              ),
+              const SizedBox(height: AppConstants.defaultSpacing),
+              CustomTextField(
+                controller: _priceController,
+                label: "Price",
+                hint: "0.00",
+                isNumber: true,
+              ),
+              const SizedBox(height: AppConstants.defaultSpacing),
+              CustomTextField(
+                controller: _descController,
+                label: "Description",
+                hint: "Enter details...",
+                maxLines: 4,
+              ),
+              const SizedBox(height: AppConstants.defaultSpacing),
+              CustomTextField(
+                controller: _imgController,
+                label: "Image URL",
+                hint: "Paste image link",
+              ),
               const SizedBox(height: 30),
-              ElevatedButton(
+              CustomButton(
+                text: isEditing ? "UPDATE PRODUCT" : "ADD PRODUCT",
                 onPressed: _saveForm,
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3F51F3), padding: const EdgeInsets.symmetric(vertical: 16)),
-                child: Text(isEditing ? "UPDATE PRODUCT" : "ADD PRODUCT", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildTextField(TextEditingController controller, String label, String hint, {bool isNumber = false, int maxLines = 1}) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-      maxLines: maxLines,
-      decoration: InputDecoration(
-        labelText: label, hintText: hint, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), filled: true, fillColor: Colors.white),
-      validator: (value) => value == null || value.isEmpty ? 'Please enter $label' : null,
     );
   }
 }

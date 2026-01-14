@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http; 
 
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/error/exception.dart';
 import '../models/product_model.dart';
 
@@ -17,7 +18,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
 
   ProductRemoteDataSourceImpl({required this.client}); 
 
-  static const String baseUrl = 'https://g5-flutter-learning-path-be.onrender.com/api/v1/products';
+  static const String baseUrl = AppConstants.apiBaseUrl;
 
   @override
   Future<List<ProductModel>> getAllProducts() async {

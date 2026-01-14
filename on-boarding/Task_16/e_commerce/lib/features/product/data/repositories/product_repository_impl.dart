@@ -1,9 +1,9 @@
 import '../../../../core/network/network_info.dart';
+import '../../../../core/utils/product_mapper.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/product_repo.dart';
 import '../datasources/product_local_data_source.dart';
 import '../datasources/product_remote_data_source.dart';
-import '../models/product_model.dart';
 
 class ProductRepositoryImpl implements ProductRepository {
   final ProductRemoteDataSource remoteDataSource;
@@ -44,27 +44,13 @@ class ProductRepositoryImpl implements ProductRepository {
 
   @override
   Future<void> createProduct(Product product) async {
-    final productModel = ProductModel(
-      id: product.id,
-      name: product.name,
-      category: product.category,
-      price: product.price,
-      description: product.description,
-      imageUrl: product.imageUrl,
-    );
+    final productModel = ProductMapper.toModel(product);
     await remoteDataSource.createProduct(productModel);
   }
 
   @override
   Future<void> updateProduct(Product product) async {
-    final productModel = ProductModel(
-      id: product.id,
-      name: product.name,
-      category: product.category,
-      price: product.price,
-      description: product.description,
-      imageUrl: product.imageUrl,
-    );
+    final productModel = ProductMapper.toModel(product);
     await remoteDataSource.updateProduct(productModel);
   }
 

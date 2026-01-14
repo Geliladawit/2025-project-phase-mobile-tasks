@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/injection.dart';
+import '../../../../core/utils/error_handler.dart';
+import '../../../../core/widgets/custom_button.dart';
 import '../../domain/entities/product.dart';
 
 class ProductDetailScreen extends StatelessWidget {
@@ -14,12 +17,28 @@ class ProductDetailScreen extends StatelessWidget {
         children: [
           Stack(
             children: [
-              Container(height: 250, width: double.infinity, color: const Color(0xFFF0EFEF),
-                child: Image.network(product.imageUrl, fit: BoxFit.cover)),
-              Positioned(top: 40, left: 20,
+              Container(
+                height: 250,
+                width: double.infinity,
+                color: AppConstants.imagePlaceholderColor,
+                child: Image.network(
+                  product.imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    color: AppConstants.imagePlaceholderColor,
+                    child: const Icon(Icons.broken_image, size: 64),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 40,
+                left: 20,
                 child: InkWell(
                   onTap: () => Navigator.pop(context),
-                  child: const CircleAvatar(backgroundColor: Colors.white, child: Icon(Icons.arrow_back_ios_new, size: 18, color: Colors.black)),
+                  child: const CircleAvatar(
+                    backgroundColor: Colors.white,
+                    child: Icon(Icons.arrow_back_ios_new, size: 18, color: Colors.black),
+                  ),
                 ),
               ),
             ],
@@ -27,43 +46,78 @@ class ProductDetailScreen extends StatelessWidget {
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(product.category, style: TextStyle(color: Colors.grey[500])),
-                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                  Text(product.name, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                  Text("\$${product.price}", style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                ]),
-                const SizedBox(height: 20),
-                const Text("Description", style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 10),
-                Text(product.description, style: TextStyle(color: Colors.grey[600], height: 1.5)),
-              ]),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product.category,
+                    style: TextStyle(color: Colors.grey[500]),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        product.name,
+                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        "\$${product.price}",
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    "Description",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    product.description,
+                    style: TextStyle(color: Colors.grey[600], height: 1.5),
+                  ),
+                ],
+              ),
             ),
           ),
           Padding(
             padding: const EdgeInsets.all(24.0),
-            child: Row(children: [
-              Expanded(
-                child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16), side: const BorderSide(color: Colors.red)),
-                  onPressed: () async {
-                    await Injection.delete.call(product.id);
-                    if (context.mounted) Navigator.pop(context);
-                  },
-                  child: const Text("DELETE", style: TextStyle(color: Colors.red)),
+            child: Row(
+              children: [
+                Expanded(
+                  child: CustomButton(
+                    text: "DELETE",
+                    onPressed: () async {
+                      try {
+                        await Injection.delete.call(product.id);
+                        if (!context.mounted) return;
+                        Navigator.pop(context);
+                      } catch (e) {
+                        if (!context.mounted) return;
+                        ErrorHandler.showErrorSnackBar(
+                          context,
+                          message: AppConstants.deleteProductError,
+                        );
+                      }
+                    },
+                    isOutlined: true,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3F51F3), padding: const EdgeInsets.symmetric(vertical: 16)),
-                  onPressed: () {
-                    Navigator.pushReplacementNamed(context, '/add_edit', arguments: product);
-                  },
-                  child: const Text("UPDATE", style: TextStyle(color: Colors.white)),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: CustomButton(
+                    text: "UPDATE",
+                    onPressed: () {
+                      Navigator.pushReplacementNamed(
+                        context,
+                        AppConstants.addEditRoute,
+                        arguments: product,
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ]),
+              ],
+            ),
           )
         ],
       ),
